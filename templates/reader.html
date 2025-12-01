@@ -1,134 +1,367 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ book.metadata.title }}</title>
     <style>
-        /* Layout */
-        body { margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; font-family: "Georgia", serif; background: #fff; }
+        /* Layout - Split Screen */
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            font-family: "Georgia", serif;
+            background: #fff;
+        }
+
+        /* Left side: Sidebar + Book Content */
+        #left-container {
+            display: flex;
+            flex: 1;
+            min-width: 0;
+        }
 
         /* Sidebar */
-        #sidebar { width: 300px; background: #f8f9fa; border-right: 1px solid #e9ecef; overflow-y: auto; padding: 20px; flex-shrink: 0; }
-        .nav-header { font-family: -apple-system, sans-serif; font-weight: bold; color: #495057; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #dee2e6; }
-        .nav-home { display: block; margin-bottom: 20px; color: #3498db; text-decoration: none; font-family: -apple-system, sans-serif; font-size: 0.9em; }
+        #sidebar {
+            width: 280px;
+            background: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+            overflow-y: auto;
+            padding: 20px;
+            flex-shrink: 0;
+        }
+
+        .nav-header {
+            font-family: -apple-system, sans-serif;
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .nav-home {
+            display: block;
+            margin-bottom: 20px;
+            color: #3498db;
+            text-decoration: none;
+            font-family: -apple-system, sans-serif;
+            font-size: 0.9em;
+        }
 
         /* TOC Tree */
-        ul.toc-list { list-style: none; padding-left: 0; margin: 0; }
-        ul.toc-list ul { padding-left: 20px; } /* Indent children */
-        li.toc-item { margin-bottom: 8px; }
-        a.toc-link { text-decoration: none; color: #495057; font-size: 0.95em; display: block; padding: 4px 0; line-height: 1.4; }
-        a.toc-link:hover { color: #000; text-decoration: underline; }
-        a.toc-link.active { color: #d63384; font-weight: bold; }
+        ul.toc-list {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+        }
+
+        ul.toc-list ul {
+            padding-left: 20px;
+        }
+
+        /* Indent children */
+        li.toc-item {
+            margin-bottom: 8px;
+        }
+
+        a.toc-link {
+            text-decoration: none;
+            color: #495057;
+            font-size: 0.95em;
+            display: block;
+            padding: 4px 0;
+            line-height: 1.4;
+        }
+
+        a.toc-link:hover {
+            color: #000;
+            text-decoration: underline;
+        }
+
+        a.toc-link.active {
+            color: #d63384;
+            font-weight: bold;
+        }
 
         /* Main Content */
-        #main { flex-grow: 1; overflow-y: auto; position: relative; scroll-behavior: smooth; }
-        .content-container { max-width: 700px; margin: 0 auto; padding: 60px 40px; line-height: 1.8; font-size: 1.15em; color: #212529; }
+        #main {
+            flex-grow: 1;
+            overflow-y: auto;
+            position: relative;
+            scroll-behavior: smooth;
+            background: #fff;
+        }
+
+        .content-container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 60px 40px;
+            line-height: 1.8;
+            font-size: 1.15em;
+            color: #212529;
+        }
 
         /* Content Styling (Basic normalization for the book HTML) */
-        .book-content img { max-width: 100%; height: auto; display: block; margin: 20px auto; }
-        .book-content h1, .book-content h2, .book-content h3 { font-family: -apple-system, sans-serif; margin-top: 1.5em; color: #333; }
-        .book-content p { margin-bottom: 1.5em; text-align: justify; }
+        .book-content img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+        }
+
+        .book-content h1,
+        .book-content h2,
+        .book-content h3 {
+            font-family: -apple-system, sans-serif;
+            margin-top: 1.5em;
+            color: #333;
+        }
+
+        .book-content p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
 
         /* Navigation Footer */
-        .chapter-nav { display: flex; justify-content: space-between; margin-top: 60px; padding-top: 20px; border-top: 1px solid #eee; font-family: -apple-system, sans-serif; }
-        .nav-btn { text-decoration: none; color: #3498db; font-weight: bold; padding: 10px 20px; border: 1px solid #3498db; border-radius: 4px; transition: all 0.2s; }
-        .nav-btn:hover { background: #3498db; color: white; }
-        .nav-btn.disabled { opacity: 0.5; pointer-events: none; border-color: #ccc; color: #ccc; }
+        .chapter-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-family: -apple-system, sans-serif;
+        }
 
+        .nav-btn {
+            text-decoration: none;
+            color: #3498db;
+            font-weight: bold;
+            padding: 10px 20px;
+            border: 1px solid #3498db;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        .nav-btn.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            border-color: #ccc;
+            color: #ccc;
+        }
+
+        /* Right side: Chat Panel */
+        #chat-panel {
+            width: 750px;
+            background: #f8f9fa;
+            border-left: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        #chat-header {
+            padding: 20px;
+            background: #fff;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: bold;
+            font-family: -apple-system, sans-serif;
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        #chat-messages {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        #chat-input-area {
+            padding: 20px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+            background: #f8f9fa;
+        }
+
+        #chat-input {
+            flex-grow: 1;
+            padding: 10px 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 20px;
+            outline: none;
+            font-family: -apple-system, sans-serif;
+            font-size: 0.95em;
+        }
+
+        #chat-send {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: -apple-system, sans-serif;
+            transition: background 0.2s;
+        }
+
+        #chat-send:hover {
+            background: #2980b9;
+        }
+
+        #chat-send:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .message {
+            line-height: 1.5;
+            font-size: 1.2em;
+            max-width: 85%;
+            font-family: -apple-system, sans-serif;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            text-align: right;
+        }
+
+        .message.user .bubble {
+            background: #3498db;
+            color: white;
+            border-radius: 18px 18px 2px 18px;
+            display: inline-block;
+            padding: 10px 15px;
+        }
+
+        .message.ai {
+            align-self: flex-start;
+            text-align: left;
+        }
+
+        .message.ai .bubble {
+            background: #e9ecef;
+            color: #333;
+            border-radius: 18px 18px 18px 2px;
+            display: inline-block;
+            padding: 10px 15px;
+        }
+
+        .message.system {
+            align-self: center;
+            color: #888;
+            font-size: 0.85em;
+            font-style: italic;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1024px) {
+            #sidebar {
+                width: 200px;
+            }
+
+            #chat-panel {
+                width: 350px;
+            }
+        }
     </style>
 </head>
+
 <body>
 
-    <!-- SIDEBAR -->
-    <div id="sidebar">
-        <a href="/" class="nav-home">← Back to Library</a>
-        <div class="nav-header">{{ book.metadata.title }}</div>
+    <!-- LEFT CONTAINER: Sidebar + Main Content -->
+    <div id="left-container">
+        <!-- SIDEBAR -->
+        <div id="sidebar">
+            <a href="/" class="nav-home">← Back to Library</a>
+            <div class="nav-header">{{ book.metadata.title }}</div>
 
-        <!-- Recursive Macro for TOC -->
-        {% macro render_toc(items) %}
+            <!-- Recursive Macro for TOC -->
+            {% macro render_toc(items) %}
             <ul class="toc-list">
-            {% for item in items %}
+                {% for item in items %}
                 <li class="toc-item">
-                    <!--
-                        Matching Logic:
-                        If the TOC item filename matches the current chapter filename, mark active.
-                        Ideally we match spine indices, but Reader 3 TOC maps to filenames.
-                        We use a simple hash matching logic here.
-                    -->
                     {% set is_active = current_chapter.href == item.file_href %}
-
-                    <!--
-                       We need to find which linear chapter index (0, 1, 2) corresponds
-                       to this TOC entry file.
-                       Since that's hard to calculate in Jinja, we just link to the
-                       file anchor. BUT, to make our linear navigation work, we
-                       rely on the fact that the user is currently reading 'chapter_index'.
-
-                       Ideally, clicking a TOC link should find the 'index' of that file.
-                       For simplicity in this version: We link to the 'href' (filename)
-                       and let JavaScript or Backend handle it?
-
-                       Actually, let's just link to the file. The browser interprets #anchors.
-                       However, our router uses /read/book/INDEX.
-
-                       SIMPLE FIX: We won't link the TOC to the route index in this simple version
-                       unless we build a map. We will visually show structure,
-                       but rely on "Previous/Next" for linear reading.
-
-                       BETTER FIX: Use JavaScript to match filenames.
-                    -->
                     <a href="#" onclick="findAndGo('{{ item.file_href }}')"
-                       class="toc-link {% if is_active %}active{% endif %}">
+                        class="toc-link {% if is_active %}active{% endif %}">
                         {{ item.title }}
                     </a>
 
                     {% if item.children %}
-                        {{ render_toc(item.children) }}
+                    {{ render_toc(item.children) }}
                     {% endif %}
                 </li>
-            {% endfor %}
+                {% endfor %}
             </ul>
-        {% endmacro %}
+            {% endmacro %}
 
-        {{ render_toc(book.toc) }}
-    </div>
+            {{ render_toc(book.toc) }}
+        </div>
 
-    <!-- MAIN CONTENT -->
-    <div id="main">
-        <div class="content-container">
-            <div class="book-content">
-                {{ current_chapter.content | safe }}
-            </div>
+        <!-- MAIN CONTENT -->
+        <div id="main">
+            <div class="content-container">
+                <div class="book-content">
+                    {{ current_chapter.content | safe }}
+                </div>
 
-            <div class="chapter-nav">
-                {% if prev_idx is not none %}
+                <div class="chapter-nav">
+                    {% if prev_idx is not none %}
                     <a href="/read/{{ book_id }}/{{ prev_idx }}" class="nav-btn">← Previous</a>
-                {% else %}
+                    {% else %}
                     <span class="nav-btn disabled">← Previous</span>
-                {% endif %}
+                    {% endif %}
 
-                <span style="color: #999; padding: 10px;">
-                    Section {{ chapter_index + 1 }} of {{ book.spine|length }}
-                </span>
+                    <span style="color: #999; padding: 10px;">
+                        Section {{ chapter_index + 1 }} of {{ book.spine|length }}
+                    </span>
 
-                {% if next_idx is not none %}
+                    {% if next_idx is not none %}
                     <a href="/read/{{ book_id }}/{{ next_idx }}" class="nav-btn">Next →</a>
-                {% else %}
+                    {% else %}
                     <span class="nav-btn disabled">Next →</span>
-                {% endif %}
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- RIGHT PANEL: Chat -->
+    <div id="chat-panel">
+        <div id="chat-header">
+            💬 AI Assistant
+        </div>
+        <div id="chat-messages">
+            <!-- Messages go here -->
+        </div>
+        <div id="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Ask about this chapter..."
+                onkeypress="handleKeyPress(event)">
+            <button id="chat-send" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script id="spine-data" type="application/json">{{ book.spine | map(attribute='href') | list | tojson }}</script>
+    <script id="config-data" type="application/json">{{ {"has_gemini": has_gemini} | tojson }}</script>
     <script>
-        // Helper to map TOC filenames to Spine Indices
-        // Pass the spine data from python to JS
-        const spineMap = {
-            {% for ch in book.spine %}
-            "{{ ch.href }}": {{ ch.order }},
-            {% endfor %}
-        };
+        // Helper to map TOC filenames to spine indices
+        const spineList = JSON.parse(document.getElementById('spine-data').textContent || '[]');
+        const config = JSON.parse(document.getElementById('config-data').textContent || '{}');
 
         function findAndGo(filename) {
             // The TOC usually has specific filenames e.g. "text/part001.html"
@@ -137,10 +370,10 @@
             const cleanFile = filename.split('#')[0];
             const anchor = filename.split('#')[1];
 
-            const idx = spineMap[cleanFile];
+            const idx = spineList.indexOf(cleanFile);
 
-            if (idx !== undefined) {
-                let url = "/read/{{ book_id }}/" + idx;
+            if (idx !== -1) {
+                const url = "/read/{{ book_id }}/" + idx;
                 // If there was an anchor, we could try to scroll to it,
                 // but simple page loads often lose anchor position without extra JS.
                 // Let's just go to the page.
@@ -149,6 +382,114 @@
                 console.log("Could not find index for", filename);
             }
         }
+
+        // --- Chat Logic ---
+        const BOOK_ID = "{{ book_id }}";
+        const CHAPTER_INDEX = parseInt("{{ chapter_index }}", 10);
+        const HAS_GEMINI = !!config.has_gemini;
+        let chatHistory = [];
+
+        function appendMessage(role, text) {
+            const container = document.getElementById('chat-messages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${role}`;
+
+            if (role === 'system') {
+                msgDiv.textContent = text;
+            } else {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                bubble.textContent = text;
+                msgDiv.appendChild(bubble);
+            }
+
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function fetchSummary() {
+            if (!HAS_GEMINI) {
+                appendMessage('system', 'Gemini API key not configured; summary unavailable.');
+                return;
+            }
+            appendMessage('system', 'Generating summary...');
+            try {
+                const response = await fetch('/api/summarize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        book_id: BOOK_ID,
+                        chapter_index: CHAPTER_INDEX,
+                        message: "",
+                        history: []
+                    })
+                });
+                const data = await response.json();
+                if (data.summary) {
+                    // Remove "Generating summary..." if possible, or just append
+                    appendMessage('ai', "Summary: " + data.summary);
+                } else {
+                    appendMessage('system', 'Failed to generate summary.');
+                }
+            } catch (e) {
+                console.error(e);
+                appendMessage('system', 'Error connecting to AI.');
+            }
+        }
+
+        async function sendMessage() {
+            if (!HAS_GEMINI) {
+                appendMessage('system', 'Gemini API key not configured; chat is disabled.');
+                return;
+            }
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            appendMessage('user', text);
+
+            // Add to history
+            chatHistory.push({ role: "user", parts: [text] });
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        book_id: BOOK_ID,
+                        chapter_index: CHAPTER_INDEX,
+                        message: text,
+                        history: chatHistory
+                    })
+                });
+                const data = await response.json();
+                if (data.response) {
+                    appendMessage('ai', data.response);
+                    chatHistory.push({ role: "model", parts: [data.response] });
+                } else {
+                    appendMessage('system', 'Error: ' + (data.detail || 'Unknown error'));
+                }
+            } catch (e) {
+                console.error(e);
+                appendMessage('system', 'Error connecting to AI.');
+            }
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+
+        // Auto-load summary on page load
+        window.addEventListener('load', () => {
+            fetchSummary();
+            if (!HAS_GEMINI) {
+                // Disable input controls if no key present
+                document.getElementById('chat-input').disabled = true;
+                document.getElementById('chat-send').disabled = true;
+            }
+        });
     </script>
 </body>
+
 </html>

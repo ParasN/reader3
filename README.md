@@ -20,7 +20,7 @@ This creates the directory `dracula_data`, which registers the book to your loca
 uv run server.py
 ```
 
-And visit [localhost:8123](http://localhost:8123/) to see your current Library. You can easily add more books, or delete them from your library by deleting the folder. It's not supposed to be complicated or complex.
+And visit [localhost:8124](http://localhost:8124/) to see your current Library. You can easily add more books, or delete them from your library by deleting the folder. It's not supposed to be complicated or complex.
 
 ## License
 

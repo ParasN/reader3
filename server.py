@@ -9,6 +9,26 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from reader3 import Book, BookMetadata, ChapterContent, TOCEntry
+import google.generativeai as genai
+from pydantic import BaseModel, Field
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Configure Gemini
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+else:
+    print("WARNING: GEMINI_API_KEY not found in environment variables.")
+
+class ChatRequest(BaseModel):
+    book_id: str
+    chapter_index: int
+    message: str
+    history: list = Field(default_factory=list)
+
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -83,7 +103,8 @@ async def read_chapter(request: Request, book_id: str, chapter_index: int):
         "chapter_index": chapter_index,
         "book_id": book_id,
         "prev_idx": prev_idx,
-        "next_idx": next_idx
+        "next_idx": next_idx,
+        "has_gemini": bool(GEMINI_API_KEY),
     })
 
 @app.get("/read/{book_id}/images/{image_name}")
@@ -104,7 +125,65 @@ async def serve_image(book_id: str, image_name: str):
 
     return FileResponse(img_path)
 
+@app.post("/api/chat")
+async def chat_endpoint(request: ChatRequest):
+    if not GEMINI_API_KEY:
+        raise HTTPException(status_code=500, detail="Gemini API key not configured")
+
+    book = load_book_cached(request.book_id)
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+
+    if request.chapter_index < 0 or request.chapter_index >= len(book.spine):
+        raise HTTPException(status_code=404, detail="Chapter not found")
+
+    chapter = book.spine[request.chapter_index]
+    context_text = chapter.text[:30000]
+
+    try:
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        
+        # System prompt / Context
+        system_instruction = f"You are a helpful assistant helping a user read a book. The user is currently reading a chapter with the following content:\n\n{context_text}\n\nAnswer the user's questions based on this text in plain text."
+        
+        full_prompt = f"{system_instruction}\n\nUser: {request.message}"
+        
+        response = model.generate_content(full_prompt)
+        
+        return {"response": response.text}
+    except Exception as e:
+        print(f"Gemini API Error: {e}")
+        raise HTTPException(status_code=500, detail=f"AI Error: {str(e)}")
+
+@app.post("/api/summarize")
+async def summarize_endpoint(request: ChatRequest):
+    if not GEMINI_API_KEY:
+        raise HTTPException(status_code=500, detail="Gemini API key not configured")
+
+    book = load_book_cached(request.book_id)
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+
+    chapter = book.spine[request.chapter_index]
+    context_text = chapter.text[:30000]
+
+    try:
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        prompt = (
+            "Provide a richer summary (about 5-7 sentences) in plain text of the chapter below. "
+            "Include key insights, events, important names, and any notable details. "
+            "Keep it concise but not terse.\n\n"
+            f"{context_text}"
+        )
+        
+        response = model.generate_content(prompt)
+        return {"summary": response.text}
+    except Exception as e:
+        print(f"Gemini API Error: {e}")
+        raise HTTPException(status_code=500, detail=f"AI Error: {str(e)}")
+
+
 if __name__ == "__main__":
     import uvicorn
-    print("Starting server at http://127.0.0.1:8123")
-    uvicorn.run(app, host="127.0.0.1", port=8123)
+    print("Starting server at http://127.0.0.1:8124")
+    uvicorn.run(app, host="127.0.0.1", port=8124)
